@@ -2,44 +2,32 @@
 
 <p align="center">Computer use for AI agents: read and operate desktop apps through the OS accessibility tree.</p>
 
-<p align="center">
-  <a href="https://github.com/lahfir/agent-desktop/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/lahfir/agent-desktop/ci.yml?branch=main&style=for-the-badge" alt="CI status"></a> <a href="https://github.com/lahfir/agent-desktop/releases"><img src="https://img.shields.io/github/v/release/lahfir/agent-desktop?include_prereleases&style=for-the-badge" alt="GitHub release"></a> <a href="https://www.npmjs.com/package/agent-desktop"><img src="https://img.shields.io/npm/v/agent-desktop?label=npm&style=for-the-badge" alt="npm version"></a>
-  <a href="https://skills.sh/lahfir/agent-desktop/agent-desktop"><img src="https://img.shields.io/badge/skills.sh-listed-8b5cf6?style=for-the-badge" alt="skills.sh listing"></a> <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg?style=for-the-badge" alt="Apache-2.0 License"></a>
-</p>
-
-<p align="center"><video src="https://github.com/user-attachments/assets/9b2c9f8c-a49d-4b69-b6cf-11d9e0d40ceb" controls width="800"></video></p>
-
-A CLI and C library for macOS, Windows and Linux. A snapshot returns JSON with a ref for every element an agent can act on. The agent acts on a ref and snapshots again to check, with no pixel matching; the loop stays in your agent.
+A standalone Rust CLI for macOS. A snapshot returns JSON with a ref for every element an agent can act on. The agent acts on a ref and snapshots again to check, with no pixel matching; the loop stays in your agent.
 
 On macOS, CLI calls reuse a private command host for each snapshot namespace and binary build. It retains native accessibility objects so a removed row cannot silently resolve to a surviving row with the same identifier. The host exits after 15 idle minutes. `TMPDIR` must be owned by the current user with mode `0700`; the standard macOS per-user temporary directory satisfies this requirement. Headless calls still prohibit foreground activation and synthesized input.
 
-Snapshots, clipboard reads, screenshots, command output and debug artifacts can contain private desktop content. Keep them out of public logs and uploads. The optional [JEV helper](skills/jev-desktop/SKILL.md) sends screen descriptions to a configured model provider; it is separate from the native CLI. See [privacy and data handling](docs/faq.md#what-data-can-contain-private-information).
+Snapshots, clipboard reads, screenshots, command output and debug artifacts can contain private desktop content. Keep them out of public logs and uploads.
 
 ## Installation
 
-Install on macOS, Windows or Linux with npm:
+Build from source on macOS with the Rust toolchain specified in `rust-toolchain.toml`:
 
 ```bash
-npm install -g agent-desktop
-agent-desktop version
+cargo build --release -p agent-desktop
+./target/release/agent-desktop version
 ```
 
-Bun, Yarn and pnpm can install the same package. It includes native binaries and platform helpers for x64 and ARM64.
-For direct execution without a JavaScript launcher, download the matching native archive from
-[GitHub Releases](https://github.com/lahfir/agent-desktop/releases) and keep its helper beside the executable.
+The executable is `target/release/agent-desktop`. Add that directory to your `PATH` to use the commands below.
 
-Official Homebrew and Scoop packages are being submitted; they are not yet available in the default catalogs.
-The repository no longer maintains a custom Homebrew tap or Scoop bucket.
+Grant Accessibility permission to the terminal or agent running the CLI:
 
-- **macOS** needs Accessibility permission: `agent-desktop permissions --guide`.
-- **Windows** needs no grant for apps at your terminal's integrity level.
-- **Linux** needs the user's graphical session with `at-spi2-core`.
-
-See [installation and permissions](docs/install.md) for package-manager behavior, release archives, and building from source.
+```bash
+agent-desktop permissions --guide
+```
 
 ## Quick start
 
-Observe, act on a ref, observe again. Any app name from `agent-desktop list-apps` works; Finder is the macOS example.
+Observe, act on a ref, observe again. Use an app name from `agent-desktop list-apps`; the example below uses Finder.
 Each command prints one JSON envelope; a trimmed snapshot follows the commands.
 
 ```bash
@@ -78,32 +66,9 @@ agent-desktop snapshot --app Finder -i      # observe again to verify
   `snapshot --root @s8f3k2p9:e3 -i --compact`.
 - **Headless by default.** Ref actions go through the accessibility API without moving the pointer or taking focus.
   The global `--headed` flag allows physical input.
-- **PowerShell.** Quote every ref (`'@s8f3k2p9:e8'`), because a bare `@token` is the splatting operator.
 
-## For AI agents
+## JSON output
 
-The binary carries its own docs, matched to its version:
-
-```bash
-agent-desktop skills get desktop      # the loop, refs, verification and retry rules
-agent-desktop skills get platform     # what differs on the OS you run on
-agent-desktop <command> --help        # flags for one command
-```
-
-Install the skill into an agent harness from [skills.sh](https://skills.sh/lahfir/agent-desktop/agent-desktop):
-
-```bash
-npx skills add https://github.com/lahfir/agent-desktop --skill agent-desktop
-```
-
-Or add this to your `AGENTS.md`:
-
-```markdown
-Use `agent-desktop` to see and operate desktop apps. Before the first use, run
-`agent-desktop skills get desktop` and `agent-desktop skills get platform`, and follow them.
-```
-
-Every command prints one envelope with `ok` and either `data` or `error`. An error carries a `code`, a `disposition` and usually a `suggestion`; retry only when `error.disposition.retry` is `safe`. The contract, error codes and exit codes are in [docs/json-output.md](docs/json-output.md).
 
 ## Commands
 
@@ -121,66 +86,26 @@ It ships 60 command names, 56 operational commands. The other four (`key-down`, 
 | Sessions | `session`, `trace`, `cursor-overlay` |
 | System | `status`, `permissions`, `version`, `batch`, `skills` |
 
-## Platform support
+## macOS support
 
-| | macOS | Windows | Linux |
-|---|:---:|:---:|:---:|
-| Accessibility tree | Yes | Yes | Yes (AT-SPI) |
-| Click / type / keyboard | Yes | Yes | AT-SPI; X11 / GNOME keys |
-| Mouse input | Yes | Yes | X11, `--headed` |
-| Screenshot | Yes | Yes | X11 windows; Wayland portal |
-| Clipboard | Yes | Yes | Yes; Wayland needs `wl-clipboard` |
-| App & window management | Yes | Yes | Launch/list; X11 window control |
-| Notifications | Yes | Yes | GNOME Shell |
-| Shell surfaces (`open-system-surface`) | Planned | Yes | GNOME tray, Action Center |
-
-The Windows surface and `launch` notes and the Linux X11 and Wayland notes are in [docs/install.md](docs/install.md#platform-notes).
-
-`agent-desktop skills get platform` prints the full capability table for the OS you run on.
-
-## Language bindings
-
-Each release also ships `libagent_desktop_ffi` for macOS, Linux and Windows, so a program can call the tool in process instead of starting the CLI for each command. `agent-desktop skills get ffi` covers the entry points, memory ownership and threading rules.
-
-```python
-import ctypes
-lib = ctypes.CDLL("./lib/libagent_desktop_ffi.dylib")
-lib.ad_adapter_create.restype = ctypes.c_void_p
-lib.ad_adapter_destroy.argtypes = [ctypes.c_void_p]
-assert lib.ad_init(6) == 0  # AD_RESULT_OK when the header's AD_ABI_VERSION_MAJOR matches the library
-adapter = lib.ad_adapter_create()
-lib.ad_adapter_destroy(adapter)
-```
+The CLI uses the native macOS accessibility API for snapshots and element actions. It also supports keyboard and mouse input, screenshots, clipboard access, app and window management, and notifications. Shell surfaces through `open-system-surface` are planned.
 
 ## Development
 
-Each platform adapter builds only on its own OS, so scope cargo to the host's packages. On macOS:
+Run checks on macOS:
 
 ```bash
-HOST_PKGS=(-p agent-desktop-core -p agent-desktop-macos -p agent-desktop -p agent-desktop-ffi)
-cargo test "${HOST_PKGS[@]}"
-cargo clippy "${HOST_PKGS[@]}" --all-targets -- -D warnings
+cargo test --workspace
+cargo clippy --workspace --all-targets -- -D warnings
+cargo fmt --all -- --check
 ```
 
-On Windows, replace `agent-desktop-macos` in that list with `agent-desktop-windows`; on Linux, with `agent-desktop-linux`.
-[CONTRIBUTING.md](CONTRIBUTING.md) lists every gate. Build from source: [docs/install.md](docs/install.md#from-source).
+The workspace contains the shared core (`crates/core`), macOS adapter (`crates/macos`), and CLI (`src`).
 
 ## Documentation
 
 | I want to... | Read |
 |---|---|
-| Fix an install problem, grant permissions, verify a download or build from source | [docs/install.md](docs/install.md) |
-| Parse the JSON envelope, error codes and exit codes | [docs/json-output.md](docs/json-output.md) |
-| Drive the tool as an AI agent | `agent-desktop skills get desktop` ([skills/agent-desktop/](skills/agent-desktop/)) |
-| Learn what differs on one OS | [macOS](skills/agent-desktop-macos/), [Windows](skills/agent-desktop-windows/), [Linux](skills/agent-desktop-linux/) |
-| Call the C library | [skills/agent-desktop-ffi/](skills/agent-desktop-ffi/) |
-| Look up the vocabulary: refs, snapshots, sessions | [CONCEPTS.md](CONCEPTS.md) |
-| Contribute and pass the gates | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| Read the engineering rules | [AGENTS.md](AGENTS.md) |
-| Learn from past bugs and lessons | [docs/solutions/](docs/solutions/) |
-| Find answers to common questions | [docs/faq.md](docs/faq.md) |
-| Report a vulnerability | [SECURITY.md](SECURITY.md) |
-| Get help | [SUPPORT.md](SUPPORT.md) |
 
 ## License
 

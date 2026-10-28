@@ -55,7 +55,7 @@ TOKEN_SCAN_MD_ROOTS="skills"
 # The live harness ships Python and shell a reader relies on the same way as
 # Rust: a plan id in a runner comment goes stale and misleads exactly as one
 # in a doc comment does, so its tree walks the same token rules.
-TOKEN_SCAN_HARNESS_ROOTS="tests/e2e-linux"
+TOKEN_SCAN_HARNESS_ROOTS="tests/e2e"
 
 token_rule() {
     local pattern="$1"
@@ -418,7 +418,7 @@ self_test() {
 /// the captures under `docs/plans/2026-07-27-002-captures/` hold the evidence
 /// recorded as a residual in `docs/dogfood-reports/`
 /// the dogfood run is why `invalid` is unproduced
-/// regenerated on demand by `probes/windows/scratch/run-dogfood.ps1`
+/// regenerated on demand by `probes/macos/scratch/run-dogfood.sh`
 /// the original zeroes it and makes a second release a no-op
 /// a rectangle whose origin is its top-left corner
 /// the flag exists on Windows 8.1 and later
@@ -465,16 +465,16 @@ wrap.rs:2:/// planned fast-follow to the current read'
     local tree_root planted_rs planted_py planted_sh
     tree_root="$(mktemp -d "${TMPDIR:-/tmp}/agent-desktop-phase-reference-selftest.XXXXXXXX")"
     trap 'cleanup_fixture_tree "$tree_root"' EXIT
-    mkdir -p "$tree_root/crates/x/src" "$tree_root/skills" "$tree_root/tests/e2e-linux/runner"
+    mkdir -p "$tree_root/crates/x/src" "$tree_root/skills" "$tree_root/tests/e2e/runner"
     planted_rs="$tree_root/crates/x/src/planted.rs"
-    planted_py="$tree_root/tests/e2e-linux/runner/planted.py"
-    planted_sh="$tree_root/tests/e2e-linux/runner/planted.sh"
+    planted_py="$tree_root/tests/e2e/runner/planted.py"
+    planted_sh="$tree_root/tests/e2e/runner/planted.sh"
     printf '/// see KTD7 for the decision
 pub fn f() {}
 ' > "$planted_rs"
     TOKEN_SCAN_RS_ROOTS="$tree_root/crates $tree_root/src"
     TOKEN_SCAN_MD_ROOTS="$tree_root/skills"
-    TOKEN_SCAN_HARNESS_ROOTS="$tree_root/tests/e2e-linux"
+    TOKEN_SCAN_HARNESS_ROOTS="$tree_root/tests/e2e"
     if token_check 2>/dev/null; then
         printf 'self-test FAIL (missed): the tree scan passed a planted plan-decision id
 ' >&2
@@ -505,7 +505,7 @@ pub fn f() {}
     fi
     TOKEN_SCAN_RS_ROOTS="crates src"
     TOKEN_SCAN_MD_ROOTS="skills"
-    TOKEN_SCAN_HARNESS_ROOTS="tests/e2e-linux"
+    TOKEN_SCAN_HARNESS_ROOTS="tests/e2e"
     cleanup_fixture_tree "$tree_root"
     trap - EXIT
 

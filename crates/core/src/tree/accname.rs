@@ -8,7 +8,6 @@ use crate::tree::name_slot_status::{NameSlotStatus, SlotStatus};
 /// documented here and implemented a second time inside the macOS adapter,
 /// and the two disagreed - the shipped one ranked `description` fifth while
 /// the documented one ranked it last, and only the documented one had no
-/// caller. A second divergent copy for Windows is the outcome this function
 /// exists to prevent.
 ///
 /// The order below is the **shipped** one, so the documented precedence and the

@@ -229,12 +229,6 @@ fn coverage_names() -> BTreeSet<&'static str> {
         .collect()
 }
 
-#[path = "windows_capability_claims_tests.rs"]
-mod windows_capability_claims;
-
-#[path = "doc_literal_drift_tests.rs"]
-mod doc_literal_drift;
-
 #[test]
 fn listing_timeout_is_accepted_in_cli_and_batch() {
     use clap::Parser;

@@ -37,7 +37,7 @@ pub(crate) struct DragCliArgs {
     #[arg(
         long = "drop-delay",
         value_name = "MS",
-        help = "Hold over the destination this many ms before releasing, so the drop target activates; default 500 (150 on Linux)"
+        help = "Hold over the destination this many ms before releasing, so the drop target activates; default 500"
     )]
     pub drop_delay: Option<u64>,
     #[arg(

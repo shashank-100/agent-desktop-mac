@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 /// `Unresponsive` — it has no way to read the exit code of a detached
 /// process (apps launched through NSWorkspace are not children of this
 /// process). `Crashed` stays in the contract for adapters with real crash
-/// evidence (e.g. Windows `GetExitCodeProcess`).
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "state", rename_all = "snake_case")]
 pub enum ProcessState {

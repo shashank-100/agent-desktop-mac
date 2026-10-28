@@ -25,7 +25,6 @@ pub(crate) fn open_private_append(path: &Path) -> std::io::Result<File> {
 }
 
 /// Read access is requested alongside append because callers lock the returned
-/// handle, and Windows `LockFileEx` fails with `ERROR_ACCESS_DENIED` on a handle
 /// opened for append only.
 pub(crate) fn open_private_append_portable(path: &Path) -> std::io::Result<File> {
     let mut options = OpenOptions::new();
@@ -88,7 +87,6 @@ pub(crate) fn write_atomic_portable(path: &Path, bytes: &[u8]) -> std::io::Resul
 /// artifacts and a regression here; the unix baseline already encodes the same
 /// asymmetry, accepting the group-readable destination and the system
 /// temporary directory that the private path rejects. The cost is that user
-/// output keeps the portable rename-based replace on Windows, which unlike
 /// `ReplaceFileW` fails over a destination another process holds open — a
 /// limitation of user output, not of private artifacts.
 pub(crate) fn write_user_atomic(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
@@ -227,12 +225,6 @@ fn create_temporary(path: &Path) -> std::io::Result<(PathBuf, File)> {
     ))
 }
 
-#[cfg(windows)]
-fn sync_directory(_path: &Path) -> std::io::Result<()> {
-    Ok(())
-}
-
-#[cfg(not(windows))]
 fn sync_directory(path: &Path) -> std::io::Result<()> {
     let mut options = OpenOptions::new();
     options.read(true);
@@ -244,12 +236,6 @@ fn sync_directory(path: &Path) -> std::io::Result<()> {
     options.open(path)?.sync_all()
 }
 
-#[cfg(windows)]
-fn sync_user_directory(_path: &Path) -> std::io::Result<()> {
-    Ok(())
-}
-
-#[cfg(not(windows))]
 fn sync_user_directory(path: &Path) -> std::io::Result<()> {
     OpenOptions::new().read(true).open(path)?.sync_all()
 }
@@ -281,27 +267,6 @@ fn validate_local_filesystem(file: &File) -> std::io::Result<()> {
             "network filesystems are not accepted here",
         ));
     }
-    Ok(())
-}
-
-#[cfg(target_os = "linux")]
-fn validate_local_filesystem(file: &File) -> std::io::Result<()> {
-    use std::os::fd::AsRawFd;
-    let mut stats = std::mem::MaybeUninit::<libc::statfs>::uninit();
-    if unsafe { libc::fstatfs(file.as_raw_fd(), stats.as_mut_ptr()) } != 0 {
-        return Err(std::io::Error::last_os_error());
-    }
-    let fs_type = unsafe { stats.assume_init() }.f_type as u64;
-    if matches!(fs_type, 0x6969 | 0x517b | 0xff53_4d42 | 0x6573_5546) {
-        return Err(permission_denied(
-            "network filesystems are not accepted here",
-        ));
-    }
-    Ok(())
-}
-
-#[cfg(not(any(target_os = "macos", target_os = "linux")))]
-fn validate_local_filesystem(_file: &File) -> std::io::Result<()> {
     Ok(())
 }
 

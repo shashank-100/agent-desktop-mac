@@ -38,8 +38,6 @@ fn main() -> ExitCode {
         unsafe { libc::umask(0o077) };
     }
     let code = run_command();
-    #[cfg(target_os = "linux")]
-    agent_desktop_linux::end_input_session();
     code
 }
 
@@ -87,11 +85,6 @@ fn run_permission_prompt_helper() -> Option<ExitCode> {
 }
 
 fn run() -> ExitCode {
-    #[cfg(target_os = "windows")]
-    let _ = agent_desktop_core::install_private_file_ops(Box::new(
-        agent_desktop_windows::WindowsPrivateFile,
-    ));
-
     let mut cli = match Cli::try_parse() {
         Ok(c) => c,
         Err(e) => {
@@ -261,11 +254,6 @@ fn execute_with_adapter(
     debug: &visual_debug::options::DebugOptions,
     deadline: Option<agent_desktop_core::Deadline>,
 ) -> Result<serde_json::Value, AppError> {
-    #[cfg(target_os = "windows")]
-    if let Err(bootstrap_error) = agent_desktop_windows::ensure_owned_process_mta_and_dpi() {
-        return Err(pre_dispatch_error(bootstrap_error.into()));
-    }
-
     let adapter = build_adapter();
     let adapter: &dyn agent_desktop_core::PlatformAdapter = &adapter;
     let report = if command_policy::requires_permission_report(&cmd) {
@@ -356,24 +344,7 @@ fn emit_response(response: &impl serde::Serialize) -> std::io::Result<()> {
 }
 
 fn build_adapter() -> impl agent_desktop_core::PlatformAdapter {
-    #[cfg(target_os = "macos")]
-    {
-        agent_desktop_macos::MacOSAdapter::new()
-    }
-
-    #[cfg(target_os = "windows")]
-    {
-        agent_desktop_windows::WindowsAdapter::new()
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        agent_desktop_linux::release_input_on_signals();
-        agent_desktop_linux::LinuxAdapter::new()
-    }
-
-    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
-    compile_error!("Unsupported platform")
+    agent_desktop_macos::MacOSAdapter::new()
 }
 
 fn init_tracing(verbose: bool) {

@@ -19,7 +19,6 @@ pub struct ObservationRequest {
 }
 
 /// The observation-mode sub-struct: shallow-traversal and renderer-
-/// accessibility handling for a web-wrapped target. The Windows adapter reads
 /// `force_renderer_accessibility` to decide whether a still-thin post-settle
 /// tree demands the `--force-renderer-accessibility` guidance or a bare tree
 /// back.

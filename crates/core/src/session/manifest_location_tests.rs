@@ -65,7 +65,6 @@ fn ending_a_session_is_visible_to_a_reader_that_composes_the_published_path() {
 /// not serialize defaults — so switching the overlay off REMOVES the key
 /// rather than writing `"enabled": false`.
 ///
-/// The Windows renderer polls this file to notice that its own session no
 /// longer wants it, and reads an absent key as "switched off". That is only
 /// correct while this holds, and it held silently until a hand-written test
 /// fixture that used the never-produced `"enabled": false` shape hid a

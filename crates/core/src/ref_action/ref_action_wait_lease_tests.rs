@@ -159,7 +159,6 @@ fn entry_with_mismatched_bounds_hash() -> RefEntry {
 /// A live element whose bounds and identity are otherwise fine, but whose
 /// ref carries a `bounds_hash` from a different position - the exact shape
 /// a caller's own preceding `scroll-to` on the same ref leaves behind
-/// (measured live: -171 -> 181 on the Windows fixture, `A24-18`).
 ///
 /// Before this fix, `stable_preflight`'s permissive check propagated this
 /// mismatch as a terminal `ACTION_FAILED` via the `?` in `ref_action.rs`
